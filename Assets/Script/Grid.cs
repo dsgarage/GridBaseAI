@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Grid : MonoBehaviour {
-    public bool displayGridGizmos;
-    public LayerMask unwalkableMask;
-    public Vector2 gridWorldSize;
-    public float nodeRadius;
-    public Color defaultWalkableColor = Color.white; // Default color for walkable nodes
-    public Color defaultUnwalkableColor = Color.red; // Default color for unwalkable nodes
-    public Color pathNodeColor = Color.yellow; // Color for path nodes
+    public bool displayGridGizmos; // グリッドのGizmos表示を制御するフラグ
+    public LayerMask unwalkableMask; // 障害物を示すレイヤーマスク
+    public Vector2 gridWorldSize; // グリッドのワールド空間でのサイズ
+    public float nodeRadius; // ノードの半径
+    public Color defaultWalkableColor = Color.white; // 歩行可能ノードのデフォルト色
+    public Color defaultUnwalkableColor = Color.red; // 歩行不可能ノードのデフォルト色
+    public Color pathNodeColor = Color.yellow; // 経路ノードの色
 
-    Node[,] grid;
-    public List<Node> path;
+    Node[,] grid; // ノードの2次元配列
+    public List<Node> path; // 経路を保持するリスト
 
-    float nodeDiameter;
-    int gridSizeX, gridSizeY;
+    float nodeDiameter; // ノードの直径
+    int gridSizeX, gridSizeY; // グリッドのX軸とY軸のサイズ
 
     void Awake() {
         nodeDiameter = nodeRadius * 2;
@@ -27,23 +27,25 @@ public class Grid : MonoBehaviour {
             return;
         }
 
-        CreateGrid();
+        CreateGrid(); // グリッドを生成
     }
 
+    // グリッドを生成するメソッド
     void CreateGrid() {
-        grid = new Node[gridSizeX, gridSizeY];
+        grid = new Node[gridSizeX, gridSizeY]; // グリッドの2次元配列を初期化
         Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.forward * gridWorldSize.y / 2;
 
         for (int x = 0; x < gridSizeX; x++) {
             for (int y = 0; y < gridSizeY; y++) {
                 Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.forward * (y * nodeDiameter + nodeRadius);
-                bool walkable = !(Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask));
-                Color nodeColor = walkable ? defaultWalkableColor : defaultUnwalkableColor; // Determine color based on walkable state
-                grid[x, y] = new Node(walkable, worldPoint, x, y, nodeColor);
+                bool walkable = !(Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask)); // 障害物があるかどうかをチェック
+                Color nodeColor = walkable ? defaultWalkableColor : defaultUnwalkableColor; // ノードの色を決定
+                grid[x, y] = new Node(walkable, worldPoint, x, y, nodeColor); // ノードを作成してグリッドに追加
             }
         }
     }
 
+    // 指定した座標のノードの色を設定するメソッド
     public void SetNodeColor(int x, int y, Color color) {
         if (x >= 0 && x < gridSizeX && y >= 0 && y < gridSizeY) {
             grid[x, y].SetColor(color);
@@ -52,6 +54,7 @@ public class Grid : MonoBehaviour {
         }
     }
 
+    // ワールド座標から対応するノードを取得するメソッド
     public Node NodeFromWorldPoint(Vector3 worldPosition) {
         float percentX = (worldPosition.x + gridWorldSize.x / 2) / gridWorldSize.x;
         float percentY = (worldPosition.z + gridWorldSize.y / 2) / gridWorldSize.y;
@@ -70,6 +73,7 @@ public class Grid : MonoBehaviour {
         return grid[x, y];
     }
 
+    // 指定したノードの近隣ノードを取得するメソッド
     public List<Node> GetNeighbours(Node node, Pathfinding.DistanceType distanceType) {
         List<Node> neighbours = new List<Node>();
 
@@ -92,25 +96,26 @@ public class Grid : MonoBehaviour {
         return neighbours;
     }
 
-
+    // Gizmosを使用してグリッドを視覚的に表示するメソッド
     void OnDrawGizmos() {
         Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, 1, gridWorldSize.y));
 
         if (grid != null && displayGridGizmos) {
             foreach (Node n in grid) {
-                Gizmos.color = n.nodeColor; // Use node color
+                Gizmos.color = n.nodeColor; // ノードの色を使用
                 Gizmos.DrawCube(n.worldPosition, Vector3.one * (nodeDiameter - .1f));
             }
         }
 
         if (path != null) {
             foreach (Node n in path) {
-                Gizmos.color = pathNodeColor; // Color for path nodes
+                Gizmos.color = pathNodeColor; // 経路ノードの色を設定
                 Gizmos.DrawCube(n.worldPosition, Vector3.one * (nodeDiameter - .1f));
             }
         }
     }
     
+    // すべてのノードを取得するメソッド
     public List<Node> GetAllNodes() {
         List<Node> allNodes = new List<Node>();
         foreach (Node node in grid) {

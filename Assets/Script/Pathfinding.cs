@@ -3,16 +3,22 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Pathfinding : MonoBehaviour {
+    // SeekerとTargetのTransformを設定します
     public Transform seeker, target;
-    public float moveSpeed = 1f; // 1 unit per second
-    public float stopDuration = 0.2f; // Stop duration in seconds
+    // 移動速度と停止時間を設定します
+    public float moveSpeed = 1f; // 1秒間に1ユニット移動
+    public float stopDuration = 0.2f; // 停止時間（秒）
+    // グリッドの参照
     Grid grid;
+    // 経路を保持するリスト
     List<Node> path;
-    
+
+    // 距離計算のタイプを定義する列挙型
     public enum DistanceType { Euclidean, Manhattan }
-    public DistanceType distanceType = DistanceType.Euclidean; // デフォルトをユークリッド距離に設定
+    // デフォルトの距離タイプをユークリッド距離に設定
+    public DistanceType distanceType = DistanceType.Euclidean;
 
-
+    // グリッドコンポーネントの取得
     void Awake() {
         grid = GetComponent<Grid>();
         if (grid == null) {
@@ -20,7 +26,7 @@ public class Pathfinding : MonoBehaviour {
         }
     }
 
-
+    // 毎フレーム経路探索を実行
     void Update() {
         if (grid != null && seeker != null && target != null) {
             Debug.Log("Seeker Position: " + seeker.position);
@@ -41,7 +47,9 @@ public class Pathfinding : MonoBehaviour {
         }
     }
 
+    // 経路探索を行うメソッド
     void FindPath(Vector3 startPos, Vector3 targetPos) {
+        // スタートノードとターゲットノードを取得
         Node startNode = grid.NodeFromWorldPoint(startPos);
         Node targetNode = grid.NodeFromWorldPoint(targetPos);
 
@@ -86,10 +94,10 @@ public class Pathfinding : MonoBehaviour {
                     }
                 }
             }
-
         }
     }
 
+    // 経路を再構築するメソッド
     void RetracePath(Node startNode, Node endNode) {
         path = new List<Node>();
         Node currentNode = endNode;
@@ -108,6 +116,7 @@ public class Pathfinding : MonoBehaviour {
         }
     }
 
+    // 距離を計算するメソッド
     int GetDistance(Node nodeA, Node nodeB) {
         int dstX = Mathf.Abs(nodeA.gridX - nodeB.gridX);
         int dstY = Mathf.Abs(nodeA.gridY - nodeB.gridY);
@@ -123,14 +132,13 @@ public class Pathfinding : MonoBehaviour {
         return 0;
     }
 
-
-
+    // 経路に沿ってシーカーを移動させるコルーチン
     IEnumerator FollowPath() {
         foreach (Node node in path) {
             Vector3 startPosition = seeker.position;
             Vector3 endPosition = node.worldPosition;
             float journeyLength = Vector3.Distance(startPosition, endPosition);
-            float journeyDuration = journeyLength / moveSpeed; // Adjust speed with moveSpeed variable
+            float journeyDuration = journeyLength / moveSpeed; // 移動速度に応じて移動時間を調整
 
             float startTime = Time.time;
 
@@ -148,7 +156,7 @@ public class Pathfinding : MonoBehaviour {
             // 最終位置を強制的に設定して、正確に到達する
             seeker.position = endPosition;
 
-            // 0.2秒間停止
+            // 停止時間
             Debug.Log("Stopping for " + stopDuration + " seconds");
             yield return new WaitForSeconds(stopDuration);
         }

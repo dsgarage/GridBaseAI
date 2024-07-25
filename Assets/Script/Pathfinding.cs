@@ -8,6 +8,10 @@ public class Pathfinding : MonoBehaviour {
     public float stopDuration = 0.2f; // Stop duration in seconds
     Grid grid;
     List<Node> path;
+    
+    public enum DistanceType { Euclidean, Manhattan }
+    public DistanceType distanceType = DistanceType.Euclidean; // デフォルトをユークリッド距離に設定
+
 
     void Awake() {
         grid = GetComponent<Grid>();
@@ -15,6 +19,7 @@ public class Pathfinding : MonoBehaviour {
             Debug.LogError("Grid component not found on the same GameObject.");
         }
     }
+
 
     void Update() {
         if (grid != null && seeker != null && target != null) {
@@ -65,7 +70,7 @@ public class Pathfinding : MonoBehaviour {
                 return;
             }
 
-            foreach (Node neighbour in grid.GetNeighbours(currentNode)) {
+            foreach (Node neighbour in grid.GetNeighbours(currentNode, distanceType)) {
                 if (!neighbour.walkable || closedSet.Contains(neighbour)) {
                     continue;
                 }
@@ -81,6 +86,7 @@ public class Pathfinding : MonoBehaviour {
                     }
                 }
             }
+
         }
     }
 
@@ -106,10 +112,18 @@ public class Pathfinding : MonoBehaviour {
         int dstX = Mathf.Abs(nodeA.gridX - nodeB.gridX);
         int dstY = Mathf.Abs(nodeA.gridY - nodeB.gridY);
 
-        if (dstX > dstY)
-            return 14 * dstY + 10 * (dstX - dstY);
-        return 14 * dstX + 10 * (dstY - dstX);
+        if (distanceType == DistanceType.Euclidean) {
+            // ユークリッド距離の計算
+            return Mathf.RoundToInt(Mathf.Sqrt(dstX * dstX + dstY * dstY));
+        } else if (distanceType == DistanceType.Manhattan) {
+            // マンハッタン距離の計算
+            // 斜め移動を許容しつつ、縦移動と横移動を組み合わせる
+            return 10 * (dstX + dstY) + (14 - 2 * 10) * Mathf.Min(dstX, dstY);
+        }
+        return 0;
     }
+
+
 
     IEnumerator FollowPath() {
         foreach (Node node in path) {

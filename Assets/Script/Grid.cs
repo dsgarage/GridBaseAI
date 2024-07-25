@@ -70,25 +70,28 @@ public class Grid : MonoBehaviour {
         return grid[x, y];
     }
 
-    public List<Node> GetNeighbours(Node node) {
+    public List<Node> GetNeighbours(Node node, Pathfinding.DistanceType distanceType) {
         List<Node> neighbours = new List<Node>();
 
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                if (x == 0 && y == 0)
-                    continue;
+        int[,] directions;
+        if (distanceType == Pathfinding.DistanceType.Manhattan) {
+            directions = new int[,] { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 } }; // 上、右、下、左
+        } else {
+            directions = new int[,] { { 0, 1 }, { 1, 1 }, { 1, 0 }, { 1, -1 }, { 0, -1 }, { -1, -1 }, { -1, 0 }, { -1, 1 } }; // 8方向
+        }
 
-                int checkX = node.gridX + x;
-                int checkY = node.gridY + y;
+        for (int i = 0; i < directions.GetLength(0); i++) {
+            int checkX = node.gridX + directions[i, 0];
+            int checkY = node.gridY + directions[i, 1];
 
-                if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeY) {
-                    neighbours.Add(grid[checkX, checkY]);
-                }
+            if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeY) {
+                neighbours.Add(grid[checkX, checkY]);
             }
         }
 
         return neighbours;
     }
+
 
     void OnDrawGizmos() {
         Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, 1, gridWorldSize.y));
